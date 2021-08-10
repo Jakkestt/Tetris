@@ -40,6 +40,7 @@ int main() {
 	unsigned int timer;
 	float delay = 0.5;
 	int score = 0;
+	int colorNum = 1;
 
 	bool isRunning = true;
 	SDL_Event event;
@@ -113,7 +114,8 @@ int main() {
 			//printf("Timer: %i\n", timer);
 
 			if (!check(a)) {
-				int n = rand() % 7;
+				for (int i = 0; i < 4; i++) field[b[i].y][b[i].x] = n + 1;
+				n = rand() % 7;
 				for (int i = 0; i < sizeof(a)/sizeof(a[0]); i++) {
 					a[i].x = figures[n][i] % 2;
 					a[i].y = figures[n][i] / 2;
@@ -161,7 +163,13 @@ int main() {
 		rotate = 0;
 		delay = 0.3;
 
-		printf("N: %i\n", n);
+		//printf("N: %i\n", n);
+		//for (int i = 0; i < sizeof(field)/sizeof(field[0]); i++) {
+		//	for (int j = 0; j < sizeof(field[0])/sizeof(field[0][0]); j++) {
+		//		printf("%i", field[i][j]);
+		//	}
+		//	printf("\n");
+		//}
 
 		// Draw
 
@@ -171,12 +179,12 @@ int main() {
 		for (int i = 0; i < M; i++) {
 			for (int j = 0; j < N; j++) {
 				if (field[i][j]==0) continue;
-				draw(Window_getRenderer(window), (Point){j, i}, 7);
+				draw(Window_getRenderer(window), (Point){j, i}, field[i][j]);
 			}
 		}
 
 		for (int i = 0; i < sizeof(a)/sizeof(a[0]); i++) {
-			draw(Window_getRenderer(window), a[i], n);
+			draw(Window_getRenderer(window), a[i], n+1);
 		}
 
 		SDL_RenderPresent(Window_getRenderer(window));
@@ -192,37 +200,37 @@ int main() {
 void draw(SDL_Renderer *renderer, Point box, int n) {
 	int r, g, b;
 	switch (n) {
-	case 0:
+	case 1:
 		r = 0;
 		g = 255;
 		b = 255;
 		break;
-	case 1:
+	case 2:
 		r = 0;
 		g = 255;
 		b = 0;
 		break;
-	case 2:
+	case 3:
 		r = 255;
 		g = 0;
 		b = 0;
 		break;
-	case 3:
+	case 4:
 		r = 128;
 		g = 0;
 		b = 128;
 		break;
-	case 4:
+	case 5:
 		r = 255;
 		g = 127;
 		b = 0;
 		break;
-	case 5:
+	case 6:
 		r = 0;
 		g = 0;
 		b = 255;
 		break;
-	case 6:
+	case 7:
 		r = 255;
 		g = 255;
 		b = 0;
