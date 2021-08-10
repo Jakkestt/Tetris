@@ -3,7 +3,7 @@
 #include <SDL2/SDL.h>
 
 typedef struct Window Window;
-struct Window* Window_create(int width, int height, char title[20]);
+struct Window* Window_create(int width, int height, char title[7]);
 void Window_destroy(struct Window* window);
 int Window_getWidth(struct Window* window);
 int Window_getHeight(struct Window* window);

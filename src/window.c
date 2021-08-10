@@ -8,7 +8,7 @@ typedef struct Window {
 	char title[20];
 } Window;
 
-void Window_init(Window *window, int width, int height, char title[20]) {
+void Window_init(Window *window, int width, int height, char title[7]) {
 	window->window = NULL;
 	window->renderer = NULL;
 	window->width = width;
