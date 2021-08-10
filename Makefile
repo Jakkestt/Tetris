@@ -1,6 +1,6 @@
 CC		:= gcc
 CFLAGS 	:=
-LDFLAGS := -lSDL2 -isystem/usr/local/bin
+LDFLAGS := -lSDL2
 
 SRC		:= ./src/
 BUILD	:= ./build/
@@ -17,7 +17,7 @@ $(TARGETS):$(OBJ) | $(BUILD)
 	${CC} ${CFLAGS} -o $@ ${OBJ} ${LDFLAGS}
 
 clean:
-	rm -f $(BUILD)* $(SRC)*.o
+	rm -rf $(BUILD) $(SRC)*.o
 
 $(SRC).c $(SRC).o:
 	${CC} ${CFLAGS} -c $*.c
