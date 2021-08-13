@@ -20,11 +20,15 @@ typedef struct Point {
 	int x,y;
 } Point;
 
-Point a[4] = {0}, b[4] = {0};
+Point a[4] = {0}, b[4] = {0}, c[4] = {0}, d[4] = {0};
 
-bool check();
+bool go = true;
 
-void draw(SDL_Renderer*, Point, int);
+bool check(Point[], size_t);
+
+void draw(SDL_Renderer*, Point, int, int);
+
+void InvCheck();
 
 int main() {
 	Window *window = Window_create(N * 20, M * 20, "Tetris");
@@ -33,6 +37,7 @@ int main() {
 	for (int i = 0; i < sizeof(a)/sizeof(a[0]); i++) {
 		a[i].x = figures[n][i] % 2;
 		a[i].y = figures[n][i] / 2;
+		c[i] = a[i];
 	}
 
 	int dx = 0;
@@ -58,14 +63,17 @@ int main() {
 				case SDLK_w:
 				case SDLK_UP:
 					rotate = true;
+					go = true;
 					break;
 				case SDLK_a:
 				case SDLK_LEFT:
 					dx=-1;
+					go = true;
 					break;
 				case SDLK_d:
 				case SDLK_RIGHT:
 					dx=1;
+					go = true;
 					break;
 				case SDLK_s:
 				case SDLK_DOWN:
@@ -87,7 +95,8 @@ int main() {
 			a[i].x += dx;
 		}
 
-		if (!check()) for (int i = 0; i < sizeof(a)/sizeof(a[0]); i++) a[i] = b[i];
+		if (!check(a, sizeof(a)/sizeof(a[0])))
+			for (int i = 0; i < sizeof(a)/sizeof(a[0]); i++) a[i] = b[i];
 
 		// Rotate
 
@@ -100,7 +109,8 @@ int main() {
 				a[i].y = p.y + y;
 			}
 
-			if (!check()) for (int i = 0; i < sizeof(a)/sizeof(a[0]); i++) a[i] = b[i];
+			if (!check(a, sizeof(a)/sizeof(a[0])))
+				for (int i = 0; i < sizeof(a)/sizeof(a[0]); i++) a[i] = b[i];
 		}
 
 		// Timer
@@ -113,12 +123,14 @@ int main() {
 			}
 			//printf("Timer: %i\n", timer);
 
-			if (!check(a)) {
+			if (!check(a, sizeof(a)/sizeof(a[0]))) {
 				for (int i = 0; i < 4; i++) field[b[i].y][b[i].x] = n + 1;
 				n = rand() % 7;
 				for (int i = 0; i < sizeof(a)/sizeof(a[0]); i++) {
 					a[i].x = figures[n][i] % 2;
 					a[i].y = figures[n][i] / 2;
+					c[i] = a[i];
+					go = true;
 				}
 			}
 		}
@@ -179,13 +191,29 @@ int main() {
 		for (int i = 0; i < M; i++) {
 			for (int j = 0; j < N; j++) {
 				if (field[i][j]==0) continue;
-				draw(Window_getRenderer(window), (Point){j, i}, field[i][j]);
+				draw(Window_getRenderer(window), (Point){j, i}, field[i][j], 255);
 			}
 		}
 
 		for (int i = 0; i < sizeof(a)/sizeof(a[0]); i++) {
-			draw(Window_getRenderer(window), a[i], n+1);
+			draw(Window_getRenderer(window), a[i], n+1, 255);
 		}
+
+		InvCheck();
+		for (int i = 0; i < sizeof(c)/sizeof(c[0]); i++) {
+			draw(Window_getRenderer(window), d[i], 8, 100);
+		}
+
+		int lowest = 0;
+		int index;
+		for (int i = 0; i < sizeof(c)/sizeof(c[0]); i++) {
+			if (a[i].y > lowest) {
+				lowest = a[i].y;
+				index = i;
+			}
+		}
+
+		draw(Window_getRenderer(window), a[index], 8, 255);
 
 		SDL_RenderPresent(Window_getRenderer(window));
 	}
@@ -197,7 +225,7 @@ int main() {
 	return 0;
 }
 
-void draw(SDL_Renderer *renderer, Point box, int n) {
+void draw(SDL_Renderer *renderer, Point box, int n, int alpha) {
 	int r, g, b;
 	switch (n) {
 	case 1:
@@ -242,15 +270,31 @@ void draw(SDL_Renderer *renderer, Point box, int n) {
 		break;
 	}
 
-	SDL_SetRenderDrawColor(renderer, r, g, b, 255);
+	SDL_SetRenderDrawColor(renderer, r, g, b, alpha);
 	SDL_RenderFillRect(renderer, &(SDL_Rect){box.x * 20, box.y * 20, 20, 20});
 }
 
-bool check() {
-	for (int i = 0; i < sizeof(a)/sizeof(a[0]); i++) {
-		if (a[i].x < 0 || a[i].x >= N || a[i].y >= M) return 0;
-		else if (field[a[i].y][a[i].x]) return 0;
+bool check(Point box[], size_t size) {
+	for (int i = 0; i < size; i++) {
+		if (box[i].x < 0 || box[i].x >= N || box[i].y >= M) return 0;
+		else if (field[box[i].y][box[i].x]) return 0;
 	}
 
 	return 1;
+}
+
+void InvCheck() {
+	if (go) {
+		for (int i = 0; i < 4; i++)
+			c[i] = a[i];
+	}
+	while (go) {
+		for (int i = 0; i < 4; i++) {
+				d[i] = c[i];
+				c[i].y += 1;
+			if (!check(c, 4)) {
+				go = false;
+			}
+		}
+	}
 }

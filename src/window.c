@@ -16,23 +16,24 @@ void Window_init(Window *window, int width, int height, char *title) {
 	strcpy(window->title, title);
 
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER) != 0)
-		printf("SDL_Init Error: %s", SDL_GetError());
+		printf("SDL_Init Error: %s\n", SDL_GetError());
 
 	window->window = SDL_CreateWindow(
 			title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, window->width,
 		window->height, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
 
-	if (window->window == NULL) {
-			printf("SDL_CreateWindow Error: %s", SDL_GetError());
-	}
+	if (window->window == NULL)
+			printf("SDL_CreateWindow Error: %s\n", SDL_GetError());
 
 	window->renderer = SDL_CreateRenderer(
 			window->window, -1,
 		SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
-	if (window->renderer == NULL) {
-			printf("SDL_CreateRenderer Error: %s", SDL_GetError());
-	}
+	if (window->renderer == NULL)
+			printf("SDL_CreateRenderer Error: %s\n", SDL_GetError());
+
+	if (SDL_SetRenderDrawBlendMode(window->renderer, SDL_BLENDMODE_BLEND) != 0) 
+		printf("SDL_SetRenderDrawBlendMode Error: %s\n", SDL_GetError());
 }
 
 Window *Window_create(int width, int height, char title[20]) {
