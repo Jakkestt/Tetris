@@ -218,17 +218,6 @@ int main() {
 			draw(Window_getRenderer(window), d[i], 8, 100);
 		}
 
-		int lowest = 0;
-		int index;
-		for (int i = 0; i < sizeof(c) / sizeof(c[0]); i++) {
-			if (a[i].y > lowest) {
-				lowest = a[i].y;
-				index = i;
-			}
-		}
-
-		draw(Window_getRenderer(window), a[index], 8, 255);
-
 		SDL_RenderPresent(Window_getRenderer(window));
 	}
 
