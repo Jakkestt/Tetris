@@ -33,6 +33,7 @@ void InvCheck();
 int main() {
 	Window *window = Window_create(N * 20, M * 20, "Tetris");
 
+	srand(SDL_GetTicks());
 	int n = rand() % 7;
 	for (int i = 0; i < sizeof(a) / sizeof(a[0]); i++) {
 		a[i].x = figures[n][i] % 2;
