@@ -47,6 +47,9 @@ int main() {
 	float delay = 0.5;
 	int score = 0;
 	int colorNum = 1;
+	int switchBlock = -1;
+	bool spawn = false;
+	bool switched = false;
 
 	bool isRunning = true;
 	SDL_Event event;
@@ -80,6 +83,11 @@ int main() {
 					for (int i = 0; i < sizeof(a) / sizeof(a[0]); i++) {
 						a[i] = d[i];
 					}
+					break;
+				case SDLK_RSHIFT:
+					if (!switched)
+						spawn = true;
+					break;
 				default:
 					break;
 				}
@@ -140,9 +148,30 @@ int main() {
 					a[i].x = figures[n][i] % 2;
 					a[i].y = figures[n][i] / 2;
 					c[i] = a[i];
-					go = true;
 				}
+				go = true;
+				switched = false;
 			}
+		}
+
+		if (spawn) {
+			if (switchBlock == -1) {
+				switchBlock = n;
+				n = rand() % 7;
+			} else {
+				int temp;
+				temp = n;
+				n = switchBlock;
+				switchBlock = temp;
+			}
+			for (int i = 0; i < sizeof(a) / sizeof(a[0]); i++) {
+				a[i].x = figures[n][i] % 2;
+				a[i].y = figures[n][i] / 2;
+				c[i] = a[i];
+			}
+			go = true;
+			spawn = false;
+			switched = true;
 		}
 
 		int k = M - 1;
