@@ -85,6 +85,7 @@ int main() {
 					}
 					break;
 				case SDLK_RSHIFT:
+				case SDLK_LSHIFT:
 					if (!switched)
 						spawn = true;
 					break;
