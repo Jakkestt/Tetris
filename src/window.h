@@ -1,6 +1,7 @@
 #ifndef WINDOW
 #define WINDOW
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_mixer.h>
 
 typedef struct Window Window;
 struct Window *Window_create(int width, int height, char *title);

@@ -50,6 +50,10 @@ int main() {
 	int switchBlock = -1;
 	bool spawn = false;
 	bool switched = false;
+	Mix_Music *theme;
+	theme = Mix_LoadMUS("resources/audio/main.wav");
+	if (Mix_FadeInMusic(theme, -1, 2000) == -1)
+		printf("Mix_FadeInMusic Error: %s", SDL_GetError());
 
 	bool isRunning = true;
 	SDL_Event event;

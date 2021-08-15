@@ -1,6 +1,6 @@
 CC		:= gcc
 CFLAGS 	:=
-LDFLAGS := -lSDL2
+LDFLAGS := -lSDL2 -lSDL2_mixer
 
 SRC		:= ./src/
 BUILD	:= ./build/
