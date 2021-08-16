@@ -64,7 +64,7 @@ int main() {
 
 	theme = Mix_LoadMUS("resources/audio/main.wav");
 	if (Mix_FadeInMusic(theme, -1, 2000) == -1)
-		printf("Mix_FadeInMusic Error: %s", SDL_GetError());
+		printf("Mix_FadeInMusic Error: %s\n", SDL_GetError());
 
 	Mix_VolumeMusic(volume);
 	bool isRunning = true;
@@ -142,7 +142,7 @@ int main() {
 		}
 
 		char title[20];
-		sprintf(title, "%s - FPS: %f", Window_getTitle(window), fps * 1000);
+		sprintf(title, "%s - %0.0f", Window_getTitle(window), fps * 1000);
 		SDL_SetWindowTitle(Window_getWindow(window), title);
 
 		/* Keyboard: Dropping blocks faster feels better when we check its
