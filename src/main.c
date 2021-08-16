@@ -1,8 +1,10 @@
 #include "window.h"
 #include <stdbool.h>
+#include <time.h>
 
 #define M 20
 #define N 10
+#define SIZE 40
 
 int field[M][N] = {0};
 
@@ -31,9 +33,10 @@ void draw(SDL_Renderer *, Point, int, int);
 void InvCheck();
 
 int main() {
-	Window *window = Window_create(N * 20, M * 20, "Tetris");
+	Window *window = Window_create(N * SIZE, M * SIZE, "Tetris");
+	time_t t;
 
-	srand(SDL_GetTicks());
+	srand((unsigned)time(&t));
 	int n = rand() % 7;
 	for (int i = 0; i < sizeof(a) / sizeof(a[0]); i++) {
 		a[i].x = figures[n][i] % 2;
@@ -41,6 +44,7 @@ int main() {
 		c[i] = a[i];
 	}
 
+	// Initialize new variables
 	int dx = 0;
 	bool rotate = 0;
 	unsigned int timer;
@@ -51,10 +55,18 @@ int main() {
 	bool spawn = false;
 	bool switched = false;
 	Mix_Music *theme;
+	bool pause = false;
+	int volume = 10;
+	int frames = 0;
+	double starttime = 0;
+	bool first = true;
+	float fps = 0.0f;
+
 	theme = Mix_LoadMUS("resources/audio/main.wav");
 	if (Mix_FadeInMusic(theme, -1, 2000) == -1)
 		printf("Mix_FadeInMusic Error: %s", SDL_GetError());
 
+	Mix_VolumeMusic(volume);
 	bool isRunning = true;
 	SDL_Event event;
 	while (isRunning) {
@@ -93,6 +105,19 @@ int main() {
 					if (!switched)
 						spawn = true;
 					break;
+				case SDLK_p:
+					pause = !pause;
+					if (pause)
+						Mix_PauseMusic();
+					else
+						Mix_ResumeMusic();
+					break;
+				case SDLK_MINUS:
+					Mix_VolumeMusic(--volume);
+					break;
+				case SDLK_EQUALS:
+					Mix_VolumeMusic(++volume);
+					break;
 				default:
 					break;
 				}
@@ -101,121 +126,147 @@ int main() {
 			}
 		}
 
-		// Keyboard
+		if (first) {
+			frames = 0;
+			starttime = SDL_GetTicks();
+			first = false;
+		}
+
+		frames++;
+
+		Uint32 time = SDL_GetTicks();
+		if (time - starttime > 0.25 && frames > 10) {
+			fps = (double)frames / (time - starttime);
+			starttime = SDL_GetTicks();
+			frames = 0;
+		}
+
+		char title[20];
+		sprintf(title, "%s - FPS: %f", Window_getTitle(window), fps * 1000);
+		SDL_SetWindowTitle(Window_getWindow(window), title);
+
+		/* Keyboard: Dropping blocks faster feels better when we check its
+		   status every frame rather than checking whether the key is held down
+		   in the switch statement if that makes sense */
 
 		const Uint8 *keystates = SDL_GetKeyboardState(NULL);
 
 		if (keystates[SDL_SCANCODE_S] || keystates[SDL_SCANCODE_DOWN])
 			delay = 0.05;
 
-		// Move
+		// Only update when game is not paused
+		if (!pause) {
 
-		for (int i = 0; i < sizeof(a) / sizeof(a[0]); i++) {
-			b[i] = a[i];
-			a[i].x += dx;
-		}
-
-		if (!check(a, sizeof(a) / sizeof(a[0])))
-			for (int i = 0; i < sizeof(a) / sizeof(a[0]); i++)
-				a[i] = b[i];
-
-		// Rotate
-
-		if (rotate) {
-			Point p = a[1];
+			// Move
 			for (int i = 0; i < sizeof(a) / sizeof(a[0]); i++) {
-				int x = a[i].y - p.y;
-				int y = a[i].x - p.x;
-				a[i].x = p.x - x;
-				a[i].y = p.y + y;
+				b[i] = a[i];
+				a[i].x += dx;
 			}
 
 			if (!check(a, sizeof(a) / sizeof(a[0])))
 				for (int i = 0; i < sizeof(a) / sizeof(a[0]); i++)
 					a[i] = b[i];
-		}
 
-		// Timer
+			// Rotate
+			if (rotate) {
+				Point p = a[1];
+				for (int i = 0; i < sizeof(a) / sizeof(a[0]); i++) {
+					int x = a[i].y - p.y;
+					int y = a[i].x - p.x;
+					a[i].x = p.x - x;
+					a[i].y = p.y + y;
+				}
 
-		if (SDL_GetTicks() - timer > delay * 1000) {
-			timer = SDL_GetTicks();
-			for (int i = 0; i < sizeof(a) / sizeof(a[0]); i++) {
-				b[i] = a[i];
-				a[i].y += 1;
+				if (!check(a, sizeof(a) / sizeof(a[0])))
+					for (int i = 0; i < sizeof(a) / sizeof(a[0]); i++)
+						a[i] = b[i];
 			}
-			// printf("Timer: %i\n", timer);
 
-			if (!check(a, sizeof(a) / sizeof(a[0]))) {
-				for (int i = 0; i < 4; i++)
-					field[b[i].y][b[i].x] = n + 1;
-				n = rand() % 7;
+			// Timer
+			if (SDL_GetTicks() - timer > delay * 1000) {
+				timer = SDL_GetTicks();
+				for (int i = 0; i < sizeof(a) / sizeof(a[0]); i++) {
+					b[i] = a[i];
+					a[i].y += 1;
+				}
+				// printf("Timer: %i\n", timer);
+
+				if (!check(a, sizeof(a) / sizeof(a[0]))) {
+					for (int i = 0; i < 4; i++)
+						field[b[i].y][b[i].x] = n + 1;
+					n = rand() % 7;
+					for (int i = 0; i < sizeof(a) / sizeof(a[0]); i++) {
+						a[i].x = figures[n][i] % 2;
+						a[i].y = figures[n][i] / 2;
+						c[i] = a[i];
+					}
+					go = true;
+					switched = false;
+				}
+			}
+
+			// Spawn from stash
+			if (spawn) {
+				if (switchBlock == -1) {
+					switchBlock = n;
+					n = rand() % 7;
+				} else {
+					int temp;
+					temp = n;
+					n = switchBlock;
+					switchBlock = temp;
+				}
 				for (int i = 0; i < sizeof(a) / sizeof(a[0]); i++) {
 					a[i].x = figures[n][i] % 2;
 					a[i].y = figures[n][i] / 2;
 					c[i] = a[i];
 				}
 				go = true;
-				switched = false;
+				spawn = false;
+				switched = true;
 			}
-		}
 
-		if (spawn) {
-			if (switchBlock == -1) {
-				switchBlock = n;
-				n = rand() % 7;
-			} else {
-				int temp;
-				temp = n;
-				n = switchBlock;
-				switchBlock = temp;
-			}
-			for (int i = 0; i < sizeof(a) / sizeof(a[0]); i++) {
-				a[i].x = figures[n][i] % 2;
-				a[i].y = figures[n][i] / 2;
-				c[i] = a[i];
-			}
-			go = true;
-			spawn = false;
-			switched = true;
-		}
-
-		int k = M - 1;
-		int cleared = 0;
-		for (int i = M - 1; i > 0; i--) {
-			int count = 0;
-			for (int j = 0; j < N; j++) {
-				if (field[i][j]) {
-					count++;
+			// Check lines cleared
+			int k = M - 1;
+			int cleared = 0;
+			for (int i = M - 1; i > 0; i--) {
+				int count = 0;
+				for (int j = 0; j < N; j++) {
+					if (field[i][j]) {
+						count++;
+					}
+					field[k][j] = field[i][j];
+					if (count >= N) {
+						cleared++;
+					}
 				}
-				field[k][j] = field[i][j];
-				if (count >= N) {
-					cleared++;
+				if (count < N) {
+					k--;
 				}
 			}
-			if (count < N) {
-				k--;
+
+			// Update score
+			switch (cleared) {
+			case 1:
+				score += 100;
+				break;
+			case 2:
+				score += 300;
+				break;
+			case 3:
+				score += 500;
+				break;
+			case 4:
+				score += 800;
+				break;
 			}
+
+			// if (cleared)
+			//	printf("Cleared %i line%s\n", cleared, cleared-1 ? "s" :
+			//"");
 		}
 
-		switch (cleared) {
-		case 1:
-			score += 100;
-			break;
-		case 2:
-			score += 300;
-			break;
-		case 3:
-			score += 500;
-			break;
-		case 4:
-			score += 800;
-			break;
-		}
-
-		// if (cleared)
-		//	printf("Cleared %i line%s\n", cleared, cleared-1 ? "s" :
-		//"");
-
+		// Reset variables
 		dx = 0;
 		rotate = 0;
 		delay = 0.3;
@@ -230,7 +281,6 @@ int main() {
 		//}
 
 		// Draw
-
 		SDL_SetRenderDrawColor(Window_getRenderer(window), 0, 0, 0, 255);
 		SDL_RenderClear(Window_getRenderer(window));
 
@@ -257,6 +307,7 @@ int main() {
 
 	printf("Final Score: %i\n", score);
 
+	Mix_FreeMusic(theme);
 	Window_destroy(window);
 
 	return 0;
@@ -308,7 +359,8 @@ void draw(SDL_Renderer *renderer, Point box, int n, int alpha) {
 	}
 
 	SDL_SetRenderDrawColor(renderer, r, g, b, alpha);
-	SDL_RenderFillRect(renderer, &(SDL_Rect){box.x * 20, box.y * 20, 20, 20});
+	SDL_RenderFillRect(renderer,
+					   &(SDL_Rect){box.x * SIZE, box.y * SIZE, SIZE, SIZE});
 }
 
 bool check(Point box[], size_t size) {

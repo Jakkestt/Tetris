@@ -19,8 +19,8 @@ void Window_init(Window *window, int width, int height, char *title) {
 		printf("SDL_Init Error: %s\n", SDL_GetError());
 
 	window->window = SDL_CreateWindow(
-		title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, window->width,
-		window->height, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+		title, SDL_WINDOWPOS_CENTERED_DISPLAY(1), SDL_WINDOWPOS_CENTERED,
+		window->width, window->height, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
 
 	if (window->window == NULL)
 		printf("SDL_CreateWindow Error: %s\n", SDL_GetError());
