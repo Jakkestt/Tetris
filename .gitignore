@@ -1,5 +1,5 @@
 build
 src/*.o
 compile_flags.txt
-/resources/*
+/resources/audio
 .DS_Store

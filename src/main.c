@@ -56,6 +56,7 @@ int main() {
 	bool spawn = false;
 	bool switched = false;
 	Mix_Music *theme;
+	Mix_Chunk *move;
 	bool pause = false;
 	int volume = 10;
 	int frames = 0;
@@ -64,10 +65,22 @@ int main() {
 	float fps = 0.0f;
 	char title[3];
 
-	theme = Mix_LoadMUS("resources/audio/main.wav");
-	if (Mix_FadeInMusic(theme, -1, 2000) == -1)
-		printf("Mix_FadeInMusic Error: %s\n", SDL_GetError());
+	// Load Music and Sound Effects and allocate channels
 
+	Mix_AllocateChannels(1);
+
+	move = Mix_LoadWAV("resources/sfx/move.wav");
+	if (!move)
+		printf("Mix_LoadWAV Error: %s\n", Mix_GetError());
+
+	theme = Mix_LoadMUS("resources/audio/main.wav");
+	if (theme) {
+		if (Mix_FadeInMusic(theme, -1, 2000) == -1)
+			printf("Mix_FadeInMusic Error: %s\n", Mix_GetError());
+	} else
+		printf("No Music was provided. Skipping...\n");
+
+	Mix_Volume(-1, volume);
 	Mix_VolumeMusic(volume);
 	bool isRunning = true;
 	SDL_Event event;
@@ -91,11 +104,15 @@ int main() {
 				case SDLK_LEFT:
 					dx = -1;
 					go = true;
+					Mix_HaltChannel(0);
+					Mix_PlayChannel(0, move, 0);
 					break;
 				case SDLK_d:
 				case SDLK_RIGHT:
 					dx = 1;
 					go = true;
+					Mix_HaltChannel(0);
+					Mix_PlayChannel(0, move, 0);
 					break;
 				case SDLK_SPACE:
 					for (int i = 0; i < sizeof(a) / sizeof(a[0]); i++) {
@@ -308,6 +325,7 @@ int main() {
 
 	printf("Final Score: %i\n", score);
 
+	Mix_FreeChunk(move);
 	Mix_FreeMusic(theme);
 	Window_destroy(window);
 
