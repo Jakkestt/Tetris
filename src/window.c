@@ -6,6 +6,7 @@ typedef struct Window {
 	int width;
 	int height;
 	char title[20];
+	char newTitle[30];
 } Window;
 
 void Window_init(Window *window, int width, int height, char *title) {
@@ -67,3 +68,8 @@ char *Window_getTitle(Window *window) { return window->title; }
 SDL_Window *Window_getWindow(Window *window) { return window->window; }
 
 SDL_Renderer *Window_getRenderer(Window *window) { return window->renderer; }
+
+void Window_setTitle(Window *window, char title[]) {
+	sprintf(window->newTitle, "%s - %s", window->title, title);
+	SDL_SetWindowTitle(window->window, window->newTitle);
+}

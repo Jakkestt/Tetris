@@ -1,5 +1,6 @@
 #include "window.h"
 #include <stdbool.h>
+#include <stdio.h>
 #include <time.h>
 
 #define M 20
@@ -61,6 +62,7 @@ int main() {
 	double starttime = 0;
 	bool first = true;
 	float fps = 0.0f;
+	char title[3];
 
 	theme = Mix_LoadMUS("resources/audio/main.wav");
 	if (Mix_FadeInMusic(theme, -1, 2000) == -1)
@@ -141,9 +143,8 @@ int main() {
 			frames = 0;
 		}
 
-		char title[20];
-		sprintf(title, "%s - %0.0f", Window_getTitle(window), fps * 1000);
-		SDL_SetWindowTitle(Window_getWindow(window), title);
+		sprintf(title, "%0.0f", fps * 1000);
+		Window_setTitle(window, title);
 
 		/* Keyboard: Dropping blocks faster feels better when we check its
 		   status every frame rather than checking whether the key is held down
