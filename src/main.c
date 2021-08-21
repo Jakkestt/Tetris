@@ -19,9 +19,15 @@ int figures[7][4] = {
 	2, 3, 4, 5, // YELLOW
 };
 
-typedef struct Point {
+typedef struct {
 	int x, y;
 } Point;
+
+typedef struct {
+	int x, y, width, height;
+	bool mouseOver;
+	char text[10];
+} Button;
 
 Point a[4] = {0}, b[4] = {0}, c[4] = {0}, d[4] = {0};
 
@@ -29,7 +35,11 @@ bool go = true;
 
 bool check(Point[], size_t);
 
+void drawUI(SDL_Renderer *, Button, TTF_Font *);
+
 void draw(SDL_Renderer *, Point, int, int);
+
+void drawText(SDL_Renderer *, TTF_Font *, int, int, const char *, int, int);
 
 void InvCheck();
 
@@ -38,14 +48,10 @@ int main() {
 	time_t t;
 
 	srand((unsigned)time(&t));
-	int n = rand() % 7;
-	for (int i = 0; i < sizeof(a) / sizeof(a[0]); i++) {
-		a[i].x = figures[n][i] % 2;
-		a[i].y = figures[n][i] / 2;
-		c[i] = a[i];
-	}
 
 	// Initialize new variables
+
+	int n = 0;
 	int dx = 0;
 	bool rotate = 0;
 	unsigned int timer;
@@ -64,6 +70,17 @@ int main() {
 	bool first = true;
 	float fps = 0.0f;
 	char title[3];
+	Button buttons[3];
+	buttons[0] =
+		(Button){10 * 40 / 2, 20 * 40 / 2 - 55, 260, 50, false, "Start"};
+	buttons[1] = (Button){10 * 40 / 2, 20 * 40 / 2, 260, 50, false, "Quit"};
+	buttons[2] =
+		(Button){10 * 40 / 2, 20 * 40 / 2 - 55, 260, 50, false, "Continue"};
+	int mouseX, mouseY;
+	Uint32 mouseButtons;
+	TTF_Font *font;
+	bool begun = false;
+	bool click = false;
 
 	// Load Music and Sound Effects and allocate channels
 
@@ -74,11 +91,10 @@ int main() {
 		printf("Mix_LoadWAV Error: %s\n", Mix_GetError());
 
 	theme = Mix_LoadMUS("resources/audio/main.wav");
-	if (theme) {
-		if (Mix_FadeInMusic(theme, -1, 2000) == -1)
-			printf("Mix_FadeInMusic Error: %s\n", Mix_GetError());
-	} else
-		printf("No Music was provided. Skipping...\n");
+	if (!theme)
+		printf("Mix_LoadMUS Error: %s\n", Mix_GetError());
+
+	font = TTF_OpenFont("resources/fonts/PixelEmulator.ttf", 22);
 
 	Mix_Volume(-1, volume);
 	Mix_VolumeMusic(volume);
@@ -92,9 +108,6 @@ int main() {
 				break;
 			case SDL_KEYDOWN:
 				switch (event.key.keysym.sym) {
-				case SDLK_ESCAPE:
-					isRunning = false;
-					break;
 				case SDLK_w:
 				case SDLK_UP:
 					rotate = true;
@@ -124,7 +137,7 @@ int main() {
 					if (!switched)
 						spawn = true;
 					break;
-				case SDLK_p:
+				case SDLK_ESCAPE:
 					pause = !pause;
 					if (pause)
 						Mix_PauseMusic();
@@ -164,16 +177,53 @@ int main() {
 		Window_setTitle(window, title);
 
 		/* Keyboard: Dropping blocks faster feels better when we check its
-		   status every frame rather than checking whether the key is held down
-		   in the switch statement if that makes sense */
+		   status every frame rather than checking whether the key is held
+		   down in the switch statement if that makes sense */
 
 		const Uint8 *keystates = SDL_GetKeyboardState(NULL);
 
 		if (keystates[SDL_SCANCODE_S] || keystates[SDL_SCANCODE_DOWN])
 			delay = 0.05;
 
+		mouseButtons = SDL_GetMouseState(&mouseX, &mouseY);
+
+		if (pause || !begun) {
+			for (int i = 0; i < sizeof(buttons) / sizeof(buttons[0]); i++) {
+				if (mouseX > buttons[i].x - buttons[i].width / 2 &&
+					mouseY > buttons[i].y - buttons[i].height / 2 &&
+					mouseX < buttons[i].x + buttons[i].width / 2 &&
+					mouseY < buttons[i].y + buttons[i].height / 2) {
+					buttons[i].mouseOver = true;
+					if (mouseButtons & SDL_BUTTON(SDL_BUTTON_LEFT)) {
+						click = true;
+					}
+				} else
+					buttons[i].mouseOver = false;
+			}
+		}
+
+		if (click) {
+			click = false;
+			if (buttons[0].mouseOver && !begun) {
+				if (Mix_FadeInMusic(theme, -1, 2000) == -1)
+					printf("Mix_FadeInMusic Error: %s\n", Mix_GetError());
+				n = rand() % 7;
+				for (int i = 0; i < sizeof(a) / sizeof(a[0]); i++) {
+					a[i].x = figures[n][i] % 2;
+					a[i].y = figures[n][i] / 2;
+					c[i] = a[i];
+				}
+				begun = true;
+			} else if (buttons[1].mouseOver) {
+				isRunning = false;
+			} else if (buttons[2].mouseOver) {
+				pause = false;
+			}
+		}
+
 		// Only update when game is not paused
-		if (!pause) {
+
+		if (!pause && begun) {
 
 			// Move
 			for (int i = 0; i < sizeof(a) / sizeof(a[0]); i++) {
@@ -299,25 +349,41 @@ int main() {
 		//}
 
 		// Draw
-		SDL_SetRenderDrawColor(Window_getRenderer(window), 0, 0, 0, 255);
+
+		SDL_SetRenderDrawColor(Window_getRenderer(window), 43, 43, 48, 255);
 		SDL_RenderClear(Window_getRenderer(window));
 
-		for (int i = 0; i < M; i++) {
-			for (int j = 0; j < N; j++) {
-				if (field[i][j] == 0)
-					continue;
-				draw(Window_getRenderer(window), (Point){j, i}, field[i][j],
-					 255);
+		if (begun) {
+			for (int i = 0; i < M; i++) {
+				for (int j = 0; j < N; j++) {
+					if (field[i][j] == 0)
+						continue;
+					draw(Window_getRenderer(window), (Point){j, i}, field[i][j],
+						 255);
+				}
+			}
+
+			for (int i = 0; i < sizeof(a) / sizeof(a[0]); i++) {
+				draw(Window_getRenderer(window), a[i], n + 1, 255);
+			}
+
+			InvCheck();
+			for (int i = 0; i < sizeof(c) / sizeof(c[0]); i++) {
+				draw(Window_getRenderer(window), d[i], 8, 100);
 			}
 		}
 
-		for (int i = 0; i < sizeof(a) / sizeof(a[0]); i++) {
-			draw(Window_getRenderer(window), a[i], n + 1, 255);
+		if (pause || !begun) {
+			for (int i = 0; i < sizeof(buttons) / sizeof(buttons[0]); i++) {
+				if (i == 2 && !begun)
+					continue;
+				drawUI(Window_getRenderer(window), buttons[i], font);
+			}
 		}
 
-		InvCheck();
-		for (int i = 0; i < sizeof(c) / sizeof(c[0]); i++) {
-			draw(Window_getRenderer(window), d[i], 8, 100);
+		if (!begun) {
+			drawText(Window_getRenderer(window), font, 10 * 40 / 2, 100,
+					 "TETRIS", 30, 50);
 		}
 
 		SDL_RenderPresent(Window_getRenderer(window));
@@ -325,6 +391,7 @@ int main() {
 
 	printf("Final Score: %i\n", score);
 
+	TTF_CloseFont(font);
 	Mix_FreeChunk(move);
 	Mix_FreeMusic(theme);
 	Window_destroy(window);
@@ -380,6 +447,40 @@ void draw(SDL_Renderer *renderer, Point box, int n, int alpha) {
 	SDL_SetRenderDrawColor(renderer, r, g, b, alpha);
 	SDL_RenderFillRect(renderer,
 					   &(SDL_Rect){box.x * SIZE, box.y * SIZE, SIZE, SIZE});
+}
+
+void drawUI(SDL_Renderer *renderer, Button button, TTF_Font *font) {
+	int originX = button.x - button.width / 2;
+	int originY = button.y - button.height / 2;
+	SDL_SetRenderDrawColor(renderer, 15, 15, 15, 255);
+	SDL_RenderFillRect(
+		renderer, &(SDL_Rect){originX, originY, button.width, button.height});
+	if (button.mouseOver)
+		SDL_SetRenderDrawColor(renderer, 235, 89, 108, 255);
+	else
+		SDL_SetRenderDrawColor(renderer, 227, 61, 83, 255);
+	SDL_RenderFillRect(renderer,
+					   &(SDL_Rect){originX + 6, originY + 6, button.width - 12,
+								   button.height - 12});
+
+	drawText(renderer, font, button.x, button.y, button.text, 15, 25);
+}
+
+void drawText(SDL_Renderer *renderer, TTF_Font *font, int centerX, int centerY,
+			  const char *title, int sizeX, int sizeY) {
+	int i = 0;
+	while (1)
+		if (title[++i] == '\0')
+			break;
+	SDL_Surface *surface;
+	SDL_Texture *texture;
+	surface = TTF_RenderText_Solid(font, title, (SDL_Color){255, 255, 255});
+	texture = SDL_CreateTextureFromSurface(renderer, surface);
+	SDL_RenderCopy(renderer, texture, NULL,
+				   &(SDL_Rect){centerX - i * sizeX, centerY - sizeY,
+							   0 + i * sizeX * 2, sizeY * 2});
+	SDL_DestroyTexture(texture);
+	SDL_FreeSurface(surface);
 }
 
 bool check(Point box[], size_t size) {

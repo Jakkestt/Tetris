@@ -9,7 +9,7 @@ typedef struct Window {
 	char newTitle[30];
 } Window;
 
-void Window_init(Window *window, int width, int height, char *title) {
+void Window_init(Window *window, int width, int height, const char *title) {
 	window->window = NULL;
 	window->renderer = NULL;
 	window->width = width;
@@ -20,7 +20,7 @@ void Window_init(Window *window, int width, int height, char *title) {
 		printf("SDL_Init Error: %s\n", SDL_GetError());
 
 	window->window = SDL_CreateWindow(
-		title, SDL_WINDOWPOS_CENTERED_DISPLAY(1), SDL_WINDOWPOS_CENTERED,
+		title, SDL_WINDOWPOS_CENTERED_DISPLAY(0), SDL_WINDOWPOS_CENTERED,
 		window->width, window->height, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
 
 	if (window->window == NULL)
@@ -37,10 +37,13 @@ void Window_init(Window *window, int width, int height, char *title) {
 		printf("SDL_SetRenderDrawBlendMode Error: %s\n", SDL_GetError());
 
 	if (Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 1024) == -1)
-		printf("Mix_OpenAudio Error: %s", SDL_GetError());
+		printf("Mix_OpenAudio Error: %s\n", SDL_GetError());
+
+	if (TTF_Init() == -1)
+		printf("TTF_Init Error: %s\n", TTF_GetError());
 }
 
-Window *Window_create(int width, int height, char title[20]) {
+Window *Window_create(int width, int height, const char *title) {
 	Window *window = (Window *)malloc(sizeof(Window));
 	Window_init(window, width, height, title);
 	return window;
@@ -51,6 +54,7 @@ void Window_reset(Window *window) {}
 void Window_destroy(Window *window) {
 	if (window) {
 		Mix_CloseAudio();
+		TTF_Quit();
 		SDL_DestroyRenderer(window->renderer);
 		SDL_DestroyWindow(window->window);
 		SDL_Quit();
@@ -69,7 +73,7 @@ SDL_Window *Window_getWindow(Window *window) { return window->window; }
 
 SDL_Renderer *Window_getRenderer(Window *window) { return window->renderer; }
 
-void Window_setTitle(Window *window, char title[]) {
+void Window_setTitle(Window *window, const char *title) {
 	sprintf(window->newTitle, "%s - %s", window->title, title);
 	SDL_SetWindowTitle(window->window, window->newTitle);
 }
