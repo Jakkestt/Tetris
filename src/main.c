@@ -55,7 +55,7 @@ int main() {
 	int dx = 0;
 	bool rotate = 0;
 	unsigned int timer;
-	float delay = 0.5;
+	float delay = 0.6;
 	int score = 0;
 	int colorNum = 1;
 	int switchBlock = -1;
@@ -65,11 +65,11 @@ int main() {
 	Mix_Chunk *move;
 	bool pause = false;
 	int volume = 10;
-	int frames = 0;
+	unsigned int frames = 0;
 	double starttime = 0;
 	bool first = true;
-	float fps = 0.0f;
-	char title[3];
+	float fps = 0;
+	char title[256];
 	Button buttons[3];
 	buttons[0] =
 		(Button){10 * 40 / 2, 20 * 40 / 2 - 55, 260, 50, false, "Start"};
@@ -81,6 +81,7 @@ int main() {
 	TTF_Font *font;
 	bool begun = false;
 	bool click = false;
+	char scoreChar[10];
 
 	// Load Music and Sound Effects and allocate channels
 
@@ -99,9 +100,9 @@ int main() {
 	Mix_Volume(-1, volume);
 	Mix_VolumeMusic(volume);
 	bool isRunning = true;
-	SDL_Event event;
 	while (isRunning) {
-		if (SDL_PollEvent(&event)) {
+		SDL_Event event;
+		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
 			case SDL_QUIT:
 				isRunning = false;
@@ -167,8 +168,8 @@ int main() {
 		frames++;
 
 		Uint32 time = SDL_GetTicks();
-		if (time - starttime > 0.25 && frames > 10) {
-			fps = (double)frames / (time - starttime);
+		if (time - starttime > 0.25 && frames > 10.0) {
+			fps = (float)frames / (time - starttime);
 			starttime = SDL_GetTicks();
 			frames = 0;
 		}
@@ -177,8 +178,8 @@ int main() {
 		Window_setTitle(window, title);
 
 		/* Keyboard: Dropping blocks faster feels better when we check its
-		   status every frame rather than checking whether the key is held
-		   down in the switch statement if that makes sense */
+		  status every frame rather than checking whether the key is held
+		  down in the switch statement if that makes sense */
 
 		const Uint8 *keystates = SDL_GetKeyboardState(NULL);
 
@@ -380,6 +381,10 @@ int main() {
 				drawUI(Window_getRenderer(window), buttons[i], font);
 			}
 		}
+
+		sprintf(scoreChar, "%i", score);
+		drawText(Window_getRenderer(window), font, 10 * 40 / 2, 50, scoreChar,
+				 30, 50);
 
 		if (!begun) {
 			drawText(Window_getRenderer(window), font, 10 * 40 / 2, 100,
