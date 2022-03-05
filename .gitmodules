@@ -1,3 +1,9 @@
 [submodule "include/SDL_ttf"]
 	path = include/SDL_ttf
 	url = https://github.com/libsdl-org/SDL_ttf
+[submodule "include/SDL2"]
+	path = include/SDL2
+	url = https://github.com/libsdl-org/SDL
+[submodule "include/SDL_mixer"]
+	path = include/SDL_mixer
+	url = https://github.com/libsdl-org/SDL_mixer
